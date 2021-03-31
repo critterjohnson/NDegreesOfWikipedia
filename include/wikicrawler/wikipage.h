@@ -2,23 +2,22 @@
 #define WIKIPAGE_H
 
 #include <vector>
+#include <string>
 
 class WikiPage {
     public:
         std::string url;
         std::vector<std::string> links;
-        std::vector<WikiPage> pages;
 
+        WikiPage() = default;
         WikiPage(std::string url);
         WikiPage(const WikiPage& ref) {
             url = ref.url;
             links = ref.links;
-            pages = ref.pages;
         } // copy constructor
 
-        WikiPage& operator=(const WikiPage& ref) { *this = ref; }
-
-        WikiPage populatePages();
+        bool linksContains(std::string url);
+        std::vector<WikiPage> generateSubPages();
 };
 
 #endif

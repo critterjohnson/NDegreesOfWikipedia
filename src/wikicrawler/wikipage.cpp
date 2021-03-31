@@ -39,7 +39,7 @@ std::vector<std::string> getWikiRefs(std::string text) {
 std::vector<std::string> trimWikiRefs(const std::vector<std::string> refs) {
     std::vector<std::string> trimmedUrls;
     for (int i = 0; i < refs.size(); i++) {
-        std::string url = refs.at(i);
+        std::string url = refs[i];
 
         bool ok = true;
         for (std::string banned : bannedStrings) {
@@ -50,7 +50,7 @@ std::vector<std::string> trimWikiRefs(const std::vector<std::string> refs) {
             }
         }
         if (ok && !(std::count(trimmedUrls.begin(), trimmedUrls.end(), url))) {
-            trimmedUrls.push_back(refs.at(i));
+            trimmedUrls.push_back(refs[i]);
         }
     }
 
@@ -76,19 +76,30 @@ std::vector<std::string> removeCircularUrls(const std::vector<std::string> urls,
     return removed;
 }
 
+// constructs a new WikiPage from the given url, but does NOT fetch sub-pages
 WikiPage::WikiPage(std::string url) {
     this->url = url;
+    if (url == "") {
+        return;
+    }
 
     std::string pageText = fetchPageText(url);
+    if (pageText == "") {
+        return; // TODO: error
+    }
     links = linkifyWikiRefs(trimWikiRefs(getWikiRefs(pageText)));
     links = removeCircularUrls(links, url);
 }
 
-WikiPage WikiPage::populatePages() {
-    WikiPage newPage = *this;
-    newPage.pages = std::vector<WikiPage>();
-    for (std::string url : newPage.links) {
-        newPage.pages.push_back(WikiPage(url));
+bool WikiPage::linksContains(std::string url) {
+    return std::count(links.begin(), links.end(), url);
+}
+
+// generates all sub pages for this vector
+std::vector<WikiPage> WikiPage::generateSubPages() {
+    std::vector<WikiPage> pages;
+    for (std::string url : links) {
+        pages.push_back(WikiPage(url));
     }
-    return newPage;
+    return pages;
 }
