@@ -1,54 +1,39 @@
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <vector>
 
 #include <wikicrawler/wikigraph.h>
-#include <wikicrawler/wikigraphnode.h>
 
-void WikiGraph::addNodeIfNotExists(std::shared_ptr<WikiGraphNode> node) {
-    for (std::shared_ptr<WikiGraphNode> nodePtr : nodes) {
-        if (node->page.url == nodePtr->page.url) {
-            return;
-        }
-    }
-    nodes.push_back(node);
+std::shared_ptr<WikiPage> WikiGraph::createPage(std::string url) {
+    std::shared_ptr<WikiPage> pagePtr = std::shared_ptr<WikiPage>(new WikiPage(url));
+    pages.push_back(pagePtr);
+    return pagePtr;
 }
 
-void WikiGraph::addWikiPage(WikiPage wikipage) {
-    addNodeIfNotExists(std::shared_ptr<WikiGraphNode>(new WikiGraphNode(wikipage)));
+void linkPages(std::shared_ptr<WikiPage> page1, std::shared_ptr<WikiPage> page2) {
+    page1->createRelationship(page2);
+    page2->createRelationship(page1);
 }
 
-void WikiGraph::addWikiPageWithEdge(WikiPage wikipage, std::shared_ptr<WikiGraphNode> edge) {
-    std::shared_ptr<WikiGraphNode> edgeInGraph = edge;
-    for (std::shared_ptr<WikiGraphNode> node : nodes) {
-        if (edge->page.url == node->page.url) {
-            edgeInGraph = node;
-            break;
+// TODO: this should do error handling if it doesn't exist
+std::shared_ptr<WikiPage> WikiGraph::getPage(std::string url) {
+    for (std::shared_ptr<WikiPage> page : pages) {
+        if (page->url == url) {
+            return page;
         }
     }
-
-    WikiGraphNode* node = new WikiGraphNode(wikipage);
-    node->addEdgeIfNotExists(edgeInGraph);
-    addNodeIfNotExists(std::shared_ptr<WikiGraphNode>(node));
+    return nullptr;
 }
 
-// void WikiGraph::addWikiPageWithEdges(WikiPage wikipage, std::vector<std::shared_ptr<WikiGraphNode>> pages) {
-//     WikiGraphNode node(wikipage);
-//     ; // TODO: sort this somehow?
-//     for (WikiPage page : pages) {
-//         WikiGraphNode pageNode(page);
-//         node.addEdgeIfNotExists(pageNode);
-//         pageNode.addEdgeIfNotExists(node);
-//         nodes.push_back(pageNode); // TODO: should check if this node already exists
-//     }
-// }
-
-int WikiGraph::findUrl(std::string url) {
-    for (int i = 0; i < nodes.size(); i++) {
-        std::shared_ptr<WikiGraphNode> node = nodes[i];
-        if (node->page.url == url) {
-            return i;
-        }
+void WikiGraph::fetchAndAddSubPages(std::string url) {
+    std::shared_ptr<WikiPage> pagePtr = getPage(url);
+    if (pagePtr == nullptr) {
+        return;
     }
-    return -1;
+
+    std::vector<std::shared_ptr<WikiPage>> subPages = pagePtr->generateSubPages();
+    for (std::shared_ptr<WikiPage> page : subPages) {
+        pages.push_back(page);
+    }
 }

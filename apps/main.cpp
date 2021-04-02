@@ -5,38 +5,45 @@
 #include <cpr/cpr.h>
 #include <wikicrawler/wikipage.h>
 #include <wikicrawler/wikigraph.h>
-#include <wikicrawler/wikigraphnode.h>
 
 int main() {
     std::string startingUrl = "https://en.wikipedia.org/wiki/Getabako";
     std::string endingUrl = "https://en.wikipedia.org/wiki/Cupboard";
+    // std::string endingUrl = "https://en.wikipedia.org/wiki/Tableware";
 
     WikiGraph graph;
-    WikiPage page(startingUrl);
-    graph.addWikiPage(page);
+    graph.createPage(startingUrl);
 
     int i = 0;
     while (true) {
-        std::shared_ptr<WikiGraphNode> node = graph.nodes[i];
-        std::cout << node->page.url << std::endl;
-        if (graph.findUrl(endingUrl) != -1) {
+        std::shared_ptr<WikiPage> page = graph.pages[i];
+        std::cout << page->url << std::endl;
+        if (graph.getPage(endingUrl) != nullptr) {
             std::cout << "found " << endingUrl << std::endl;
             break;
         }
-        for (std::string link : node->page.links) {
-            WikiPage page(link);
-            graph.addWikiPageWithEdge(page, node);
-        }
+        // TODO: fix theoretically infinite loop - if a node already exists don't add its children again
+        graph.fetchAndAddSubPages(page->url);
         i++;
     }
-
     std::cout << std::endl;
 
-    for (std::shared_ptr<WikiGraphNode> node : graph.nodes) {
-        std::cout << node->page.url;
-        for (std::shared_ptr<WikiGraphNode> edge : node->edges) {
-            std::cout << " -> " << edge->page.url;
+    for (std::shared_ptr<WikiPage> page : graph.pages) {
+        std::cout << page->url << " -> ";
+        auto relationships = page->getRelationships();
+        for (std::shared_ptr<WikiPage> r : relationships) {
+            std::cout << r->url << " - ";
         }
         std::cout << std::endl;
     }
+
+    // for (std::shared_ptr<WikiGraphNode> node : graph.nodes) {
+    //     std::cout << node->page.url;
+    //     // std::cout << " -> ";
+    //     // for (int i = 0; i < node->relationships.size(); i++) {
+    //     //     std::shared_ptr<WikiGraphNode> edge = node->relationships[i];
+    //     //     std::cout << edge->page.url + " (" << i << "); ";
+    //     // }
+    //     std::cout << std::endl;
+    // }
 }

@@ -96,10 +96,36 @@ bool WikiPage::linksContains(std::string url) {
 }
 
 // generates all sub pages for this vector
-std::vector<WikiPage> WikiPage::generateSubPages() {
-    std::vector<WikiPage> pages;
+std::vector<std::shared_ptr<WikiPage>> WikiPage::generateSubPages() {
+    std::vector<std::shared_ptr<WikiPage>> pages;
     for (std::string url : links) {
-        pages.push_back(WikiPage(url));
+        std::shared_ptr<WikiPage> pagePtr = std::shared_ptr<WikiPage>(new WikiPage(url));
+        pagePtr->createRelationship(shared_from_this());
+        createRelationship(pagePtr);
+        pages.push_back(pagePtr);
     }
     return pages;
+}
+
+std::vector<std::shared_ptr<WikiPage>> WikiPage::getRelationships() {
+    return relationships;
+}
+
+void WikiPage::createRelationship(std::shared_ptr<WikiPage> page) {
+    // add relationship to this node
+    bool add = true;
+    for (std::shared_ptr<WikiPage> p : relationships) {
+        if (p->url == page->url) {
+            add = false;
+        }
+    }
+    if (add) {
+        relationships.push_back(page); // TODO: sort edges somehow?
+    }
+}
+
+void WikiPage::createRelationships(std::vector<std::shared_ptr<WikiPage>> pages) {
+    for (std::shared_ptr<WikiPage> page : pages) {
+        createRelationship(page);
+    }
 }
