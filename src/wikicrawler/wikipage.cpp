@@ -40,7 +40,6 @@ std::vector<std::string> trimWikiRefs(const std::vector<std::string> refs) {
     std::vector<std::string> trimmedUrls;
     for (int i = 0; i < refs.size(); i++) {
         std::string url = refs[i];
-
         bool ok = true;
         for (std::string banned : bannedStrings) {
             size_t f = url.find(banned);

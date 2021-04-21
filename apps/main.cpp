@@ -36,14 +36,4 @@ int main() {
         }
         std::cout << std::endl;
     }
-
-    // for (std::shared_ptr<WikiGraphNode> node : graph.nodes) {
-    //     std::cout << node->page.url;
-    //     // std::cout << " -> ";
-    //     // for (int i = 0; i < node->relationships.size(); i++) {
-    //     //     std::shared_ptr<WikiGraphNode> edge = node->relationships[i];
-    //     //     std::cout << edge->page.url + " (" << i << "); ";
-    //     // }
-    //     std::cout << std::endl;
-    // }
 }
