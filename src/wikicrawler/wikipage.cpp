@@ -8,6 +8,9 @@
 
 const std::string bannedStrings[] = {":", "%", "Terms_of_Use", "Privacy_policy", "Cookie_statement", "Main_Page"};
 
+// TODO: the url of a page can change after a redirect - for example, wiki/Dishware becomes wiki/Tableware - this needs to be
+// able to handle that by following redirects and adding an alias for the url
+
 // gets page text from a url
 std::string fetchPageText(std::string url) {
     cpr::SslOptions sslOpts = cpr::Ssl(cpr::ssl::CaPath{"/etc/ssl/certs"}); //! this shouldn't be necessary and is Linux specific (bad)

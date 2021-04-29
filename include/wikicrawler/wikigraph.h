@@ -4,18 +4,25 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
+#include <unordered_map>
 
 #include "wikipage.h"
 
 class WikiGraph {
     public:
-        std::shared_ptr<WikiPage> createPage(std::string url);
-        void linkPages(std::shared_ptr<WikiPage> page1, std::shared_ptr<WikiPage> page2);
-        std::shared_ptr<WikiPage> getPage(std::string url);
+        std::mutex mtx;
 
-        // finds a WikiPage in this graph (if it already exists) and generates and adds its sub pages
-        void fetchAndAddSubPages(std::string url);
-        std::vector<std::shared_ptr<WikiPage>> pages; // TODO: make this private and provide access to pages through an iterator
+        std::shared_ptr<WikiPage> addPageFromUrl(std::string url);
+        std::shared_ptr<WikiPage> addWikiPage(WikiPage*);
+        std::shared_ptr<WikiPage> getPage(std::string url);
+        void populateSubPages(std::string url);
+        std::vector<std::string> getLevel(std::string url, int level);
+        int findUrl(std::string);
+
+    private:
+        std::unordered_map<std::string, std::shared_ptr<WikiPage>> pages;
+        void linkPages(std::shared_ptr<WikiPage> page1, std::shared_ptr<WikiPage> page2);
 };
 
 #endif
