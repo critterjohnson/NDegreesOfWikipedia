@@ -20,101 +20,56 @@ int main() {
     if (!startPage.linksContains(endingUrl)) {
         // lambda that each thread runs
         auto f = [&found, &graph, endingUrl](std::string startUrl) {
-            WikiPage startPage(startUrl);
-            std::unordered_map<std::string, WikiPage> pages; // map with all pages encountered during traversal
-            pages[startUrl] = startPage;
-            std::vector<std::string> links = startPage.links;
+            std::shared_ptr<WikiPage> startPage(new WikiPage(startUrl));
+            std::vector<std::shared_ptr<WikiPage>> pages; // vector with all pages encountered during traversal
+            pages.push_back(startPage);
+            std::vector<std::string> links = startPage->links;
 
             // go through each url and sub-url in order until it's found in any thread
             int i = 0;
             while (!found) {
-                WikiPage page(links[i]);
-                pages[links[i]] = page;
-                for (std::string link : page.links) {
+                std::shared_ptr<WikiPage> page(new WikiPage(links[i]));
+                pages.push_back(page);
+                for (std::string link : page->links) {
                     links.push_back(link);
-                    std::cout << link << std::endl;
+                    //std::cout << link << std::endl;
 
                     if (link == endingUrl) {
                         found = true;
+                        std::cout << "found " << endingUrl << std::endl;
                     }
                 }
                 i++;
             }
 
-            std::scoped_lock lock(graph.mtx);
+            std::scoped_lock lock{graph.mtx};
+            for (std::shared_ptr<WikiPage> page : pages) {
+                graph.addWikiPage(page);
+            }
         };
 
+        std::vector<std::thread*> threads;
         std::cout << "spawning threads" << std::endl;
         for (std::string url : startPage.links) {
-            new std::thread(f, url);
+            threads.push_back(new std::thread(f, url));
         }
 
         while (!found) {
         }
+
+        std::cout << "constructing graph" << std::endl;
+        for (std::thread* t : threads) {
+            t->join();
+        }
+
+        std::scoped_lock lock{graph.mtx};
+        std::vector<std::shared_ptr<WikiPage>> pages = graph.getWikiPages();
+        for (std::shared_ptr<WikiPage> p : pages) {
+            std::cout << p->url; // TODO: this segfaults somehow?
+            for (std::shared_ptr<WikiPage> p : p->getRelationships()) {
+                std::cout << " -> " << p->url;
+            }
+            std::cout << std::endl << std::endl;
+        }
     }
-
-    //WikiGraph graph;
-    //graph.addPage(startingUrl);
-    //graph.populateSubPages(startingUrl);
-
-    //if (!(graph.findUrl(endingUrl) == 1)) {
-        //graph.populateSubPages(startingUrl);
-
-        //bool found = false;
-
-        //auto f = [&found, endingUrl](std::string url) {
-            //WikiGraph graph;
-            //graph.addPage(url);
-
-            //int i = 1;
-            //int lastLevelLength = 0;
-            //while (!(graph.findUrl(endingUrl) == 1)) {
-                //if (found)
-                    //break;
-                //std::cout << "level: " << i << std::endl;
-                //auto level = graph.getLevel(url, i);
-
-                //for (int j = lastLevelLength; j < level.size(); j++) {
-                    //if (found)
-                        //break;
-                    //graph.addPage(level[j]);
-                    //std::cout << level[j] << std::endl;
-                    //if (j % 30 == 0)
-                        //if (graph.findUrl(endingUrl) == 1)
-                            //break;
-                //}
-
-                //lastLevelLength = level.size();
-                //i++;
-            //}
-            //found = true;
-        //};
-        
-        //for (std::string u : graph.getPage(startingUrl)->links) {
-            //new std::thread(f, u);
-        //}
-        //while (!found) {
-        //}
-
-         //while loop here that checks the graph every 10 seconds to see if found to replace checking in each thread
-
-        //std::cout << "found " << endingUrl << std::endl;
-    //}
-
-    //int i = 1;
-    //int lastLevelLength = 0;
-    //while (!(graph.findUrl(endingUrl) == 1)) {
-        //std::cout << "level: " << i << std::endl;
-        //auto level = graph.getLevel(startingUrl, i);
-        //for (int j = lastLevelLength; j < level.size(); j++) {
-            //graph.addPage(level[j]);
-            //std::cout << level[j] << std::endl;
-            //if (j % 30 == 0)
-                //if (graph.findUrl(endingUrl) == 1)
-                    //break;
-        //}
-        //lastLevelLength = level.size();
-        //i++;
-    //}
-    //std::cout << "found " << endingUrl << std::endl;
 }

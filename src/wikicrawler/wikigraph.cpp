@@ -14,14 +14,13 @@ std::shared_ptr<WikiPage> WikiGraph::addPageFromUrl(std::string url) {
     return pages[url];
 }
 
-std::shared_ptr<WikiPage> WikiGraph::addWikiPage(WikiPage* page) {
-    // TODO: create links to subpages that already exist in the graph
-
+std::shared_ptr<WikiPage> WikiGraph::addWikiPage(std::shared_ptr<WikiPage> page) {
     if (pages.count(page->url) > 0) {
         return pages[page->url];
     }
     std::shared_ptr<WikiPage> ptr(page);
     pages[page->url] = ptr;
+    linkWithLinkedPages(ptr);
     return ptr;
 }
 
@@ -44,28 +43,6 @@ void WikiGraph::populateSubPages(std::string url) {
     }
 }
 
-std::vector<std::string> WikiGraph::getLevel(std::string url, int level) {
-    std::vector<std::string> urls;
-    std::shared_ptr<WikiPage> curPage = getPage(url);
-    urls.push_back(url);
-
-    int levelStart = 0;
-    int levelEnd = 1;
-    for (int i = 1; i <= level; i++) {
-        for (int j = levelStart; j < levelEnd; j++) {
-            curPage = getPage(urls[j]);
-            for (std::string u : curPage->links) {
-                if(std::find(urls.begin(), urls.end(), u) == urls.end())
-                    urls.push_back(u);
-            }
-        }
-        levelStart = levelEnd;
-        levelEnd = urls.size();
-    }
-
-    return urls;
-}
-
 int WikiGraph::findUrl(std::string url) {
     for (auto p = pages.begin(); p != pages.end(); p++) {
         if (p->first == url) {
@@ -75,7 +52,28 @@ int WikiGraph::findUrl(std::string url) {
     return 0;
 }
 
+std::vector<std::shared_ptr<WikiPage>> WikiGraph::getWikiPages() {
+    std::vector<std::shared_ptr<WikiPage>> wikipages;
+    for (const auto [key, value] : pages) {
+        wikipages.push_back(value);
+    }
+    return wikipages;
+}
+
 void WikiGraph::linkPages(std::shared_ptr<WikiPage> page1, std::shared_ptr<WikiPage> page2) {
     page1->createRelationship(page2);
     page2->createRelationship(page1);
+}
+
+void WikiGraph::linkWithLinkedPages(std::shared_ptr<WikiPage> page) {
+    for (std::string link : page->links) {
+        if (pages.find(link) != pages.end()) {
+            std::shared_ptr<WikiPage> wPage = pages[link];
+            for (std::shared_ptr<WikiPage> relation : wPage->relationships) {
+                if (relation->url == link)
+                    break;
+            }
+            linkPages(page, wPage);
+        }
+    }
 }

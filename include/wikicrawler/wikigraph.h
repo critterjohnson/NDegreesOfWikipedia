@@ -14,15 +14,16 @@ class WikiGraph {
         std::mutex mtx;
 
         std::shared_ptr<WikiPage> addPageFromUrl(std::string url);
-        std::shared_ptr<WikiPage> addWikiPage(WikiPage*);
+        std::shared_ptr<WikiPage> addWikiPage(std::shared_ptr<WikiPage>);
         std::shared_ptr<WikiPage> getPage(std::string url);
         void populateSubPages(std::string url);
-        std::vector<std::string> getLevel(std::string url, int level);
         int findUrl(std::string);
+        std::vector<std::shared_ptr<WikiPage>> getWikiPages();
 
     private:
         std::unordered_map<std::string, std::shared_ptr<WikiPage>> pages;
         void linkPages(std::shared_ptr<WikiPage> page1, std::shared_ptr<WikiPage> page2);
+        void linkWithLinkedPages(std::shared_ptr<WikiPage> page);
 };
 
 #endif

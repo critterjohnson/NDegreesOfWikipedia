@@ -12,7 +12,6 @@ class WikiPage : public std::enable_shared_from_this<WikiPage> {
 
         WikiPage() = default;
         WikiPage(std::string url);
-        WikiPage(WikiPage& page);
 
         bool linksContains(std::string url);
         std::vector<std::shared_ptr<WikiPage>> generateSubPages();
