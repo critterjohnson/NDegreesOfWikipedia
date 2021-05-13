@@ -16,10 +16,11 @@ int main() {
     WikiPage startPage(startingUrl);
     WikiGraph graph;
 
+    std::mutex cout_mtx;
     std::atomic_bool found = false;
     if (!startPage.linksContains(endingUrl)) {
         // lambda that each thread runs
-        auto f = [&found, &graph, endingUrl](std::string startUrl) {
+        auto f = [&found, &graph, &cout_mtx, endingUrl](std::string startUrl) {
             std::shared_ptr<WikiPage> startPage(new WikiPage(startUrl));
             std::vector<std::shared_ptr<WikiPage>> pages; // vector with all pages encountered during traversal
             pages.push_back(startPage);
@@ -32,10 +33,10 @@ int main() {
                 pages.push_back(page);
                 for (std::string link : page->links) {
                     links.push_back(link);
-                    //std::cout << link << std::endl;
 
-                    if (link == endingUrl) {
+                    if (link == endingUrl && !found) {
                         found = true;
+                        std::scoped_lock lck(cout_mtx);
                         std::cout << "found " << endingUrl << std::endl;
                     }
                 }
@@ -49,15 +50,21 @@ int main() {
         };
 
         std::vector<std::thread*> threads;
-        std::cout << "spawning threads" << std::endl;
-        for (std::string url : startPage.links) {
+        {
+            std::scoped_lock lck(cout_mtx);
+            std::cout << "spawning threads" << std::endl;
+        }
+        for (std::string url : startPage.links) { // TODO: really shouldn't let the number of links on the first page determine the number of threads
             threads.push_back(new std::thread(f, url));
         }
 
         while (!found) {
         }
 
-        std::cout << "constructing graph" << std::endl;
+        { 
+            std::scoped_lock lck(cout_mtx);
+            std::cout << "constructing graph" << std::endl;
+        }
         for (std::thread* t : threads) {
             t->join();
         }
@@ -65,7 +72,8 @@ int main() {
         std::scoped_lock lock{graph.mtx};
         std::vector<std::shared_ptr<WikiPage>> pages = graph.getWikiPages();
         for (std::shared_ptr<WikiPage> p : pages) {
-            std::cout << p->url; // TODO: this segfaults somehow?
+            std::scoped_lock lck(cout_mtx);
+            std::cout << p->url;
             for (std::shared_ptr<WikiPage> p : p->getRelationships()) {
                 std::cout << " -> " << p->url;
             }
