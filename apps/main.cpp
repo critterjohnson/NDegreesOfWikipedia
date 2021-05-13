@@ -9,9 +9,9 @@
 #include <wikicrawler/wikigraph.h>
 
 int main() {
-    std::string startingUrl = "https://en.wikipedia.org/wiki/Getabako";
-    //std::string endingUrl = "https://en.wikipedia.org/wiki/Cupboard";
-    std::string endingUrl = "https://en.wikipedia.org/wiki/Dishware";
+    std::string startingUrl = "https://en.wikipedia.org/wiki/Roblox";
+    std::string endingUrl = "https://en.wikipedia.org/wiki/Minecraft";
+    std::cout << startingUrl << " -> " << endingUrl << std::endl;
 
     WikiPage startPage(startingUrl);
     WikiGraph graph;
@@ -79,5 +79,7 @@ int main() {
             }
             std::cout << std::endl << std::endl;
         }
+    } else {
+        std::cout << "ending url " << endingUrl << " found on starting page " << startingUrl << std::endl;
     }
 }
